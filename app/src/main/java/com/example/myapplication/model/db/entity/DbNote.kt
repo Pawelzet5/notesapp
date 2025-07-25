@@ -1,10 +1,13 @@
 package com.example.myapplication.model.db.entity
 
 import androidx.room.Entity
+import androidx.room.PrimaryKey
 
 @Entity(tableName = "notes")
 data class DbNote(
-    val id: Long,
+    @PrimaryKey(autoGenerate = true)
+    val localId: Long = -1,
+    val remoteId: Long? = null,
     val title: String,
     val content: String,
     var isFavourite: Boolean
