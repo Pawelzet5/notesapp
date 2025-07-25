@@ -131,9 +131,8 @@ fun DismissableNote(modifier: Modifier = Modifier, note: Note, onDismiss: () -> 
     val confirmValueChange = { it: SwipeToDismissBoxValue -> it == StartToEnd }
     val positionalThreshold = { it: Float -> it / 3 * 2}
     val dismissState =
-        rememberSaveable(
-            note.id,
-            saver = SwipeToDismissBoxState.Saver(confirmValueChange, positionalThreshold, density),
+        remember(
+            note.id
         ) {
             SwipeToDismissBoxState(Settled, density, confirmValueChange, positionalThreshold)
         }
