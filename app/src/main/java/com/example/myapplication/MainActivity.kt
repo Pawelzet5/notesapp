@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
                 val imeInset = WindowInsets.ime.asPaddingValues()
                 val navigationInset = WindowInsets.navigationBars.asPaddingValues()
                 Column(modifier = Modifier.fillMaxSize()) {
-                    var input by remember { mutableStateOf("") }
+                    var input by rememberSaveable { mutableStateOf("") }
 
                     LazyColumn(
                         modifier = Modifier.weight(1f),
