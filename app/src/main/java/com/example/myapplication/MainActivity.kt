@@ -76,9 +76,9 @@ class MainActivity : ComponentActivity() {
                                         start =
                                             gestureInsets.calculateStartPadding(layoutDirection),
                                         end = gestureInsets.calculateEndPadding(layoutDirection),
-                                        bottom =
-                                            imeInset.calculateBottomPadding() +
-                                                    navigationInset.calculateBottomPadding(),
+                                        bottom = imeInset.calculateBottomPadding()
+                                            .takeIf { it > 0.dp }
+                                            ?: navigationInset.calculateBottomPadding()
                                     )
                                 ),
                         value = input,
@@ -148,9 +148,11 @@ fun DismissableNote(modifier: Modifier = Modifier, note: DbNote, onDismiss: () -
             }
         },
     ) {
-        Card(modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        ) {
             Text(modifier = Modifier.padding(16.dp), text = note.content)
         }
     }
