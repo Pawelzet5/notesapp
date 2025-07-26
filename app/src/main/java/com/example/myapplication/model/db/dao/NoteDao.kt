@@ -16,5 +16,5 @@ interface NoteDao {
     fun insertNote(dbNote: DbNote)
 
     @Delete
-    fun deleteNote(id: Long)
+    fun deleteNote(dbNote: DbNote)
 }
