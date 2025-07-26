@@ -33,6 +33,12 @@ fun Application.module() {
         post<CreateNoteBody>("/note") { note ->
             database.noteQueries.insert(note.title, note.content)
             call.respond(HttpStatusCode.Created)
+            // TODO("Implement id payload")
+        }
+
+        put<UpdateNoteBody>("/note/{id}") { body ->
+            val correctId = verifyCorrectNoteId() ?: return@put
+            database.noteQueries.updateFavourite(body.isFavourite, correctId)
         }
 
         delete("/note/{id}") {

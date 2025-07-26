@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CreateNoteBody(
-    @SerialName("title") val title: String?,
-    @SerialName("content") val content: String
+data class UpdateNoteBody(
+    @SerialName("id") val id: Long,
+    @SerialName("isFavourite") val isFavourite: Boolean
 )

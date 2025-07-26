@@ -13,3 +13,9 @@ W ramach zadania rekrutacyjnego zrobiłem:
 4. Dodanie biblioteki Room
     Zależności, plik Database, Dao, DbNote
 5. Dodanie biblioteki Hilt - dependency injection
+
+6. Rozszerzenie modelu danych bazy SQLDelight o nowe pola:
+    isFavourite - flaga służąca do obsługi funkcjonalności "ulubione"
+    title - dodatek ode mnie w celu subtelnego rozbudowania widoku notatki
+        o atrybut który ułatwia czytelność takich notatek na liście i identyfikacje :)
+    + update pola isFavourite na backendzie.
