@@ -2,6 +2,7 @@ package com.example.ktor_client
 
 import com.example.models.dto.CreateNoteBody
 import com.example.models.dto.GetNoteBody
+import com.example.models.dto.UpdateNoteBody
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
@@ -9,6 +10,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -31,6 +33,14 @@ class ApiClient {
                 setBody(note)
             }
         return response.status == HttpStatusCode.Created
+    }
+
+    suspend fun updateNote(updateNoteBody: UpdateNoteBody): Boolean {
+        val response = client.put("$urlString/note/${updateNoteBody.id}") {
+            contentType(ContentType.Application.Json)
+            setBody(updateNoteBody)
+        }
+        return response.status == HttpStatusCode.OK
     }
 
     suspend fun deleteNote(id: Long): Boolean {
