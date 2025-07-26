@@ -55,7 +55,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.example.models.database.Note
 import com.example.myapplication.ui.theme.MyApplicationTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 

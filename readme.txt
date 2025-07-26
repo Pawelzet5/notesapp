@@ -12,3 +12,4 @@ W ramach zadania rekrutacyjnego zrobiłem:
 
 4. Dodanie biblioteki Room
     Zależności, plik Database, Dao, DbNote
+5. Dodanie biblioteki Hilt - dependency injection
