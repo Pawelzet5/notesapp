@@ -17,15 +17,16 @@ import io.ktor.serialization.kotlinx.json.json
 
 class ApiClient {
 
+    private val urlString = "http://0.0.0.0:8080"
+
     private val client = HttpClient(OkHttp) { install(ContentNegotiation) { json() } }
 
     suspend fun getNotes(): List<GetNoteBody> {
-        return client.get("http://10.0.2.2:8080/notes").body()
+        return client.get("$urlString/notes").body()
     }
 
     suspend fun addNote(note: CreateNoteBody): Boolean {
-        val response =
-            client.post("http://10.0.2.2:8080/note") {
+        val response = client.post("$urlString/note") {
                 contentType(ContentType.Application.Json)
                 setBody(note)
             }
@@ -33,7 +34,7 @@ class ApiClient {
     }
 
     suspend fun deleteNote(id: Long): Boolean {
-        val response = client.delete("http://10.0.2.2:8080/note/$id")
+        val response = client.delete("$urlString/note/$id")
         return response.status == HttpStatusCode.OK
     }
 }
