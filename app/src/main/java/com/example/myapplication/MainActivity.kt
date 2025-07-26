@@ -5,44 +5,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeGestures
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxState
-import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.SwipeToDismissBoxValue.*
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.material3.*
+import androidx.compose.material3.SwipeToDismissBoxValue.Settled
+import androidx.compose.material3.SwipeToDismissBoxValue.StartToEnd
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,7 +27,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import com.example.models.database.Note
+import com.example.myapplication.model.db.entity.DbNote
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -128,25 +102,25 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun DismissableNote(modifier: Modifier = Modifier, note: Note, onDismiss: () -> Unit) {
+fun DismissableNote(modifier: Modifier = Modifier, note: DbNote, onDismiss: () -> Unit) {
     val density = LocalDensity.current
     val confirmValueChange = { it: SwipeToDismissBoxValue -> it == StartToEnd }
-    val positionalThreshold = { it: Float -> it / 3 * 2}
+    val positionalThreshold = { it: Float -> it / 3 * 2 }
     val dismissState =
         remember(
-            note.id
+            note.localId
         ) {
             SwipeToDismissBoxState(Settled, density, confirmValueChange, positionalThreshold)
         }
     val backgroundColor by
-        rememberUpdatedState(
-            when (dismissState.dismissDirection) {
-                StartToEnd -> lerp(Color.Transparent, Color.Red, dismissState.progress)
-                else -> Color.Transparent
-            }
-        )
+    rememberUpdatedState(
+        when (dismissState.dismissDirection) {
+            StartToEnd -> lerp(Color.Transparent, Color.Red, dismissState.progress)
+            else -> Color.Transparent
+        }
+    )
     if (dismissState.currentValue == StartToEnd) {
-        LaunchedEffect(note.id) {
+        LaunchedEffect(note.localId) {
             onDismiss()
         }
     }
