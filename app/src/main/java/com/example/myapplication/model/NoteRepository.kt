@@ -21,7 +21,7 @@ class NoteRepository @Inject constructor(
 
     override suspend fun insertNote(dbNote: DbNote) {
         noteDao.insertNote(dbNote)
-        noteApiClient.addNote(CreateNoteBody(dbNote.content)) // TODO("Upload note's title and isFavourite flag")
+        noteApiClient.addNote(CreateNoteBody(dbNote.title,  dbNote.content))
     }
 
     override suspend fun deleteNote(dbNote: DbNote) {

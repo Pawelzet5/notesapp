@@ -2,18 +2,14 @@ package com.example
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver.Companion.IN_MEMORY
-import com.example.models.dto.CreateNoteBody
-import com.example.models.dto.GetNoteBody
+import com.example.models.dto.*
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.response.respond
-import io.ktor.server.routing.RoutingContext
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.routing
+import io.ktor.server.routing.*
 import io.ktor.util.logging.error
 import java.util.Properties
 
@@ -30,12 +26,12 @@ fun Application.module() {
 
         get("/notes") {
             val dbNotes = database.noteQueries.selectAll().executeAsList()
-            val dtoNotes = dbNotes.map { GetNoteBody(it.id, it.content) }
+            val dtoNotes = dbNotes.map { GetNoteBody(it.id, it.title, it.content, it.isFavourite) }
             call.respond(dtoNotes)
         }
 
         post<CreateNoteBody>("/note") { note ->
-            database.noteQueries.insert(note.content)
+            database.noteQueries.insert(note.title, note.content)
             call.respond(HttpStatusCode.Created)
         }
 
