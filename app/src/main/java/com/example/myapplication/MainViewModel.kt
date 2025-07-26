@@ -2,19 +2,20 @@ package com.example.myapplication
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ktor_client.ApiClient
-import com.example.models.database.Note
-import com.example.models.dto.CreateNoteBody
+import com.example.myapplication.model.db.entity.DbNote
+import com.example.myapplication.model.repository.INoteRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MainViewModel : ViewModel() {
-    private val client = ApiClient()
-    private val _notes = MutableStateFlow<List<Note>>(emptyList())
-    val notes: StateFlow<List<Note>> = _notes.asStateFlow()
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val noteRepository: INoteRepository
+) : ViewModel() {
+    private val _notes = MutableStateFlow<List<DbNote>>(emptyList())
+    val notes: StateFlow<List<DbNote>> = _notes.asStateFlow()
 
     init {
         loadNotes()
@@ -22,22 +23,21 @@ class MainViewModel : ViewModel() {
 
     private fun loadNotes() {
         viewModelScope.launch(Dispatchers.IO) {
-            val notes = client.getNotes()
-            _notes.value = notes.map { Note(it.id, it.content) }
+            noteRepository.getAllNotesFlow().collect {
+                _notes.value = it
+            }
         }
     }
 
-    fun addNote(note: String) {
+    fun addNote(contentInput: String, titleInput: String? = null) {
         viewModelScope.launch(Dispatchers.IO) {
-            client.addNote(CreateNoteBody(note))
-            loadNotes()
+            noteRepository.insertNote(contentInput, titleInput)
         }
     }
 
-    fun deleteNote(note: Note) {
+    fun deleteNote(dbNote: DbNote) {
         viewModelScope.launch(Dispatchers.IO) {
-            client.deleteNote(note.id)
-            loadNotes()
+            noteRepository.deleteNote(dbNote)
         }
     }
 }
