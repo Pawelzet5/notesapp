@@ -49,7 +49,8 @@ class MainActivity : ComponentActivity() {
                 val imeInset = WindowInsets.ime.asPaddingValues()
                 val navigationInset = WindowInsets.navigationBars.asPaddingValues()
                 Column(modifier = Modifier.fillMaxSize()) {
-                    var input by rememberSaveable { mutableStateOf("") }
+                    var contentInput by rememberSaveable { mutableStateOf("") }
+                    var titleInput by rememberSaveable { mutableStateOf("") }
 
                     LazyColumn(
                         modifier = Modifier.weight(1f),
@@ -67,34 +68,48 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    TextField(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(
-                                    PaddingValues(
-                                        start =
-                                            gestureInsets.calculateStartPadding(layoutDirection),
-                                        end = gestureInsets.calculateEndPadding(layoutDirection),
-                                        bottom = imeInset.calculateBottomPadding()
-                                            .takeIf { it > 0.dp }
-                                            ?: navigationInset.calculateBottomPadding()
-                                    )
-                                ),
-                        value = input,
-                        onValueChange = { input = it },
-                        label = { Text("Treść notatki") },
-                        keyboardActions =
-                            KeyboardActions(
-                                onSend = {
-                                    if (input.isNotBlank()) {
-                                        viewModel.addNote(input)
-                                        input = ""
+                    Column(
+                        Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            PaddingValues(
+                                start =
+                                    gestureInsets.calculateStartPadding(layoutDirection),
+                                end = gestureInsets.calculateEndPadding(layoutDirection),
+                                bottom = imeInset.calculateBottomPadding()
+                                    .takeIf { it > 0.dp }
+                                    ?: navigationInset.calculateBottomPadding()
+                            )
+                        )
+                    ) {
+                        TextField(
+                            modifier =
+                                Modifier.fillMaxWidth(),
+                            value = titleInput,
+                            onValueChange = { titleInput = it },
+                            label = { Text("Tytuł notatki") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                        )
+                        TextField(
+                            modifier = Modifier.fillMaxWidth(),
+                            value = contentInput,
+                            onValueChange = { contentInput = it },
+                            label = { Text("Treść notatki") },
+                            keyboardActions =
+                                KeyboardActions(
+                                    onSend = {
+                                        if (contentInput.isNotBlank()) {
+                                            viewModel.addNote(contentInput, titleInput)
+                                            contentInput = ""
+                                            titleInput = ""
+                                        }
                                     }
-                                }
-                            ),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                    )
+                                ),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                        )
+                    }
+
                 }
             }
         }
