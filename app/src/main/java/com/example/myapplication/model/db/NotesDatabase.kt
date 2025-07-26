@@ -6,7 +6,7 @@ import com.example.myapplication.model.db.dao.NoteDao
 import com.example.myapplication.model.db.entity.DbNote
 
 @Database(entities = [DbNote::class], version = 1, exportSchema = false)
-abstract class Database: RoomDatabase() {
+abstract class NotesDatabase: RoomDatabase() {
 
     abstract fun noteDao(): NoteDao
 }
