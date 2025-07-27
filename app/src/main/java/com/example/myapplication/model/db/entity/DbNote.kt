@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "notes")
 data class DbNote(
     @PrimaryKey(autoGenerate = true)
-    val localId: Long = -1,
+    val localId: Long = 0,
     val remoteId: Long? = null,
     val title: String,
     val content: String,
