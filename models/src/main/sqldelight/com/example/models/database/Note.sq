@@ -2,7 +2,7 @@ import kotlin.Boolean;
 
 CREATE TABLE note (
   id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-  title TEXT,
+  title TEXT NOT NULL,
   content TEXT NOT NULL,
   isFavourite INTEGER AS Boolean NOT NULL DEFAULT 0
 );
@@ -14,6 +14,9 @@ FROM note;
 insert:
 INSERT INTO note(title, content)
 VALUES (?, ?);
+
+lastInsertId:
+SELECT last_insert_rowid();
 
 delete:
 DELETE FROM note

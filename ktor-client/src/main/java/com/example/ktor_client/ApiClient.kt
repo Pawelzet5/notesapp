@@ -27,15 +27,21 @@ class ApiClient {
         return client.get("$urlString/notes").body()
     }
 
-    suspend fun addNote(note: CreateNoteBody): Boolean {
+    suspend fun addNote(title: String, content: String): Long {
+        val createNoteBody = CreateNoteBody(title, content)
         val response = client.post("$urlString/note") {
-                contentType(ContentType.Application.Json)
-                setBody(note)
-            }
-        return response.status == HttpStatusCode.Created
+            contentType(ContentType.Application.Json)
+            setBody(createNoteBody)
+        }
+        print(response.toString())
+        if (response.status == HttpStatusCode.Created)
+            return response.body<CreateNoteResponse>().id
+        else
+            throw IOException("Error during uploading new note")
     }
 
-    suspend fun updateNote(updateNoteBody: UpdateNoteBody): Boolean {
+    suspend fun updateNote(noteId: Long, isFavourite: Boolean): Boolean {
+        val updateNoteBody = UpdateNoteBody(noteId, isFavourite)
         val response = client.put("$urlString/note/${updateNoteBody.id}") {
             contentType(ContentType.Application.Json)
             setBody(updateNoteBody)
