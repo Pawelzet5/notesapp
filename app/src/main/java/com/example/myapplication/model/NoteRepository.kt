@@ -1,8 +1,6 @@
 package com.example.myapplication.model
 
 import com.example.ktor_client.ApiClient
-import com.example.models.dto.CreateNoteBody
-import com.example.models.dto.UpdateNoteBody
 import com.example.myapplication.model.db.dao.NoteDao
 import com.example.myapplication.model.db.entity.DbNote
 import com.example.myapplication.model.repository.INoteRepository
@@ -29,13 +27,16 @@ class NoteRepository @Inject constructor(
         // TODO(Implement Synchronization)
     }
 
-    override suspend fun insertNote(contentInput: String, titleInput: String) {
-        DbNote(
-            content = contentInput,
-            title = titleInput,
-            isFavourite = false
-        ).let { noteDao.insertNote(it) }
-        noteApiClient.addNote(CreateNoteBody(titleInput, contentInput))
+    override suspend fun insertNote(title: String, content: String) {
+        try {
+            val note = insertNoteToDatabase(title, content)
+            noteApiClient.addNote(title, content).let { assignedRemoteId ->
+                noteDao.updateNote(note.copy(remoteId = assignedRemoteId))
+            }
+        } catch (e: Exception) {
+            //TODO(Implement handling exception)
+        }
+
     }
 
     override suspend fun deleteNote(dbNote: DbNote) {
@@ -50,5 +51,11 @@ class NoteRepository @Inject constructor(
         dbNote.remoteId?.let {
             noteApiClient.updateNote(UpdateNoteBody(it, dbNote.isFavourite))
         }
+    }
+
+    private suspend fun insertNoteToDatabase(title: String, content: String): DbNote {
+        val note = DbNote(title = title, content = content, isFavourite = false)
+        val id = noteDao.insertNote(note)
+        return note.copy(localId = id)
     }
 }
