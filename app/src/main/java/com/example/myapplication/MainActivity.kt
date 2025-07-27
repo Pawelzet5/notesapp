@@ -230,9 +230,9 @@ fun DismissableNote(
                 ) {
                     Text(
                         modifier = Modifier.weight(1f).padding(
-                            start = if (showTitle) 12.dp else 8.dp,
+                            start = 8.dp,
                             end = 8.dp,
-                            top = 8.dp,
+                            top =  if (showTitle) 0.dp else 8.dp,
                             bottom = 8.dp
                         ),
                         text = note.content,

@@ -49,7 +49,7 @@ class NoteRepository @Inject constructor(
     override suspend fun updateNote(dbNote: DbNote) {
         noteDao.updateNote(dbNote)
         dbNote.remoteId?.let {
-            noteApiClient.updateNote(UpdateNoteBody(it, dbNote.isFavourite))
+            noteApiClient.updateNote(it, dbNote.isFavourite)
         }
     }
 

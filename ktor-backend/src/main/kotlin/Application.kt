@@ -31,9 +31,16 @@ fun Application.module() {
         }
 
         post<CreateNoteBody>("/note") { note ->
-            database.noteQueries.insert(note.title, note.content)
-            call.respond(HttpStatusCode.Created)
-            // TODO("Implement id payload")
+            try {
+                val assignedId = database.transactionWithResult {
+                    database.noteQueries.insert(note.title, note.content)
+                    database.noteQueries.lastInsertId().executeAsOne()
+                }
+                call.respond(HttpStatusCode.Created, CreateNoteResponse(assignedId))
+            } catch (e: Exception) {
+                call.application.environment.log.error(e)
+                call.respond(HttpStatusCode.InternalServerError)
+            }
         }
 
         put<UpdateNoteBody>("/note/{id}") { body ->
