@@ -29,8 +29,12 @@ class NoteRepository @Inject constructor(
         // TODO(Implement Synchronization)
     }
 
-    override suspend fun insertNote(contentInput: String, titleInput: String?) {
-        //noteDao.insertNote(dbNote)
+    override suspend fun insertNote(contentInput: String, titleInput: String) {
+        DbNote(
+            content = contentInput,
+            title = titleInput,
+            isFavourite = false
+        ).let { noteDao.insertNote(it) }
         noteApiClient.addNote(CreateNoteBody(titleInput, contentInput))
     }
 

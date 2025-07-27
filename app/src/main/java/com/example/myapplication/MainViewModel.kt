@@ -29,7 +29,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun addNote(contentInput: String, titleInput: String? = null) {
+    fun addNote(contentInput: String, titleInput: String) {
         viewModelScope.launch(Dispatchers.IO) {
             noteRepository.insertNote(contentInput, titleInput)
         }
