@@ -40,4 +40,10 @@ class MainViewModel @Inject constructor(
             noteRepository.deleteNote(dbNote)
         }
     }
+
+    fun toggleNoteFavorite(dbNote: DbNote) {
+        viewModelScope.launch(Dispatchers.IO) {
+            noteRepository.updateNote(dbNote.copy(isFavourite = !dbNote.isFavourite))
+        }
+    }
 }

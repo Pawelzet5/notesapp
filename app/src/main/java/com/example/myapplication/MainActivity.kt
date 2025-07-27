@@ -11,7 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.SwipeToDismissBoxValue.Settled
 import androidx.compose.material3.SwipeToDismissBoxValue.StartToEnd
@@ -25,6 +25,8 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import com.example.myapplication.model.db.entity.DbNote
@@ -62,25 +64,28 @@ class MainActivity : ComponentActivity() {
                             ),
                     ) {
                         items(notes) { note ->
-                            DismissableNote(modifier = Modifier.animateItem(), note = note) {
-                                viewModel.deleteNote(note)
-                            }
+                            DismissableNote(
+                                modifier = Modifier.animateItem(),
+                                note = note,
+                                onDismiss = { viewModel.deleteNote(note) },
+                                onToggleFavorite = { viewModel.toggleNoteFavorite(note) }
+                            )
                         }
                     }
 
                     Column(
                         Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            PaddingValues(
-                                start =
-                                    gestureInsets.calculateStartPadding(layoutDirection),
-                                end = gestureInsets.calculateEndPadding(layoutDirection),
-                                bottom = imeInset.calculateBottomPadding()
-                                    .takeIf { it > 0.dp }
-                                    ?: navigationInset.calculateBottomPadding()
+                            .fillMaxWidth()
+                            .padding(
+                                PaddingValues(
+                                    start =
+                                        gestureInsets.calculateStartPadding(layoutDirection),
+                                    end = gestureInsets.calculateEndPadding(layoutDirection),
+                                    bottom = imeInset.calculateBottomPadding()
+                                        .takeIf { it > 0.dp }
+                                        ?: navigationInset.calculateBottomPadding()
+                                )
                             )
-                        )
                     ) {
                         TextField(
                             modifier =
@@ -117,7 +122,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun DismissableNote(modifier: Modifier = Modifier, note: DbNote, onDismiss: () -> Unit) {
+fun DismissableNote(
+    modifier: Modifier = Modifier,
+    note: DbNote,
+    onDismiss: () -> Unit,
+    onToggleFavorite: () -> Unit
+) {
     val density = LocalDensity.current
     val confirmValueChange = { it: SwipeToDismissBoxValue -> it == StartToEnd }
     val positionalThreshold = { it: Float -> it / 3 * 2 }
@@ -168,7 +178,57 @@ fun DismissableNote(modifier: Modifier = Modifier, note: DbNote, onDismiss: () -
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
-            Text(modifier = Modifier.padding(16.dp), text = note.content)
+            Column {
+                val showTitle = note.title.isNotBlank()
+                if (showTitle) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1f)
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            text = note.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        FavoriteButton(note.isFavourite, onToggleFavorite)
+                    }
+                }
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
+                    modifier = Modifier
+                ) {
+                    Text(
+                        modifier = Modifier.weight(1f).padding(
+                            start = if (showTitle) 12.dp else 8.dp,
+                            end = 8.dp,
+                            top = 8.dp,
+                            bottom = 8.dp
+                        ),
+                        text = note.content,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    if (!showTitle)
+                        FavoriteButton(note.isFavourite, onToggleFavorite)
+                }
+
+            }
         }
+    }
+}
+
+@Composable
+fun FavoriteButton(isFavorite: Boolean, onClick: () -> Unit) {
+    IconButton(modifier = Modifier, onClick = onClick) {
+        if (isFavorite)
+            Icon(imageVector = Icons.Default.Favorite, contentDescription = "Add to Favorite")
+        else
+            Icon(
+                imageVector = Icons.Default.FavoriteBorder,
+                contentDescription = "Remove From Favorite"
+            )
     }
 }
