@@ -4,7 +4,8 @@ import com.example.myapplication.model.db.entity.DbNote
 import kotlinx.coroutines.flow.Flow
 
 interface INoteRepository {
-    suspend fun getAllNotesFlow(): Flow<List<DbNote>>
+
+    fun getNotesFlow(showFavoritesOnly: Boolean) : Flow<List<DbNote>>
 
     suspend fun synchronizeNotes()
 

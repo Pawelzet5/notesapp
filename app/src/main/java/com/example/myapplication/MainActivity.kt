@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApplicationTheme {
                 val notes by viewModel.notes.collectAsState()
+                val showFavouritesOnly by viewModel.showFavouritesOnly.collectAsState()
                 val isRefreshing by viewModel.syncInProgress.collectAsState()
 
                 val layoutDirection = LocalLayoutDirection.current
@@ -58,15 +59,23 @@ class MainActivity : ComponentActivity() {
                     isRefreshing = isRefreshing,
                     onRefresh = viewModel::onRefresh
                 ) {
-                    Column(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                            .padding(top = statusBarInset.calculateTopPadding())
+                    ) {
                         var contentInput by rememberSaveable { mutableStateOf("") }
                         var titleInput by rememberSaveable { mutableStateOf("") }
-
+                        Row(Modifier.padding(8.dp)) {
+                            FilterChip(
+                                selected = showFavouritesOnly,
+                                onClick = { viewModel.setShowFavouritesOnly(!showFavouritesOnly) },
+                                label = { Text("Ulubione") }
+                            )
+                        }
                         LazyColumn(
                             modifier = Modifier.weight(1f),
                             contentPadding =
                                 PaddingValues(
-                                    top = statusBarInset.calculateTopPadding(),
                                     start = gestureInsets.calculateStartPadding(layoutDirection),
                                     end = gestureInsets.calculateEndPadding(layoutDirection),
                                 ),
@@ -76,7 +85,7 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.animateItem(),
                                     note = note,
                                     onDismiss = { viewModel.deleteNote(note) },
-                                    onToggleFavorite = { viewModel.toggleNoteFavorite(note) }
+                                    onToggleFavorite = { viewModel.toggleNoteFavourite(note) }
                                 )
                             }
                         }

@@ -1,30 +1,29 @@
 package com.example.myapplication
 
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.example.myapplication.model.db.entity.DbNote
 import com.example.myapplication.model.repository.INoteRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val noteRepository: INoteRepository
 ) : ViewModel(), DefaultLifecycleObserver {
-    private val _notes = MutableStateFlow<List<DbNote>>(emptyList())
-    val notes: StateFlow<List<DbNote>> = _notes.asStateFlow()
+    private val _showFavouritesOnly = MutableStateFlow(false)
+    val showFavouritesOnly: StateFlow<Boolean> = _showFavouritesOnly
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val notes: StateFlow<List<DbNote>> = _showFavouritesOnly
+        .flatMapLatest { showFavourites ->
+            noteRepository.getNotesFlow(showFavourites)
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _syncInProgress = MutableStateFlow(false)
-     val syncInProgress = _syncInProgress.asStateFlow()
-
-    init {
-        loadNotes()
-    }
+    val syncInProgress = _syncInProgress.asStateFlow()
 
     override fun onResume(owner: LifecycleOwner) {
         super.onResume(owner)
@@ -33,12 +32,8 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    private fun loadNotes() {
-        viewModelScope.launch(Dispatchers.IO) {
-            noteRepository.getAllNotesFlow().collect {
-                _notes.value = it
-            }
-        }
+    fun setShowFavouritesOnly(value: Boolean) {
+        _showFavouritesOnly.value = value
     }
 
     fun addNote(titleInput: String, contentInput: String) {
@@ -53,7 +48,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun toggleNoteFavorite(dbNote: DbNote) {
+    fun toggleNoteFavourite(dbNote: DbNote) {
         viewModelScope.launch(Dispatchers.IO) {
             noteRepository.updateNote(dbNote.copy(isFavourite = !dbNote.isFavourite))
         }

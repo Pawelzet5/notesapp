@@ -23,7 +23,13 @@ class NoteRepository @Inject constructor(
 ) : INoteRepository {
     private val TAG = "NoteRepo"
 
-    override suspend fun getAllNotesFlow(): Flow<List<DbNote>> = noteDao.getAllNotesFlow()
+    override fun getNotesFlow(showFavoritesOnly: Boolean): Flow<List<DbNote>> {
+        return if (showFavoritesOnly) {
+            noteDao.getFavouriteNotesFlow()
+        } else {
+            noteDao.getAllNotesFlow()
+        }
+    }
 
     override suspend fun synchronizeNotes() {
         try {

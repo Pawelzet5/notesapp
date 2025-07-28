@@ -1,11 +1,6 @@
 package com.example.myapplication.model.db.dao
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 import com.example.myapplication.model.db.entity.DbNote
 import kotlinx.coroutines.flow.Flow
 
@@ -13,6 +8,15 @@ import kotlinx.coroutines.flow.Flow
 interface NoteDao {
     @Query("SELECT * FROM notes WHERE syncStatus != 'PENDING_DELETE' ORDER BY lastModified DESC")
     fun getAllNotesFlow(): Flow<List<DbNote>>
+
+    @Query(
+    """
+    SELECT * FROM notes 
+    WHERE isFavourite = 1 AND syncStatus != 'PENDING_DELETE' 
+    ORDER BY lastModified DESC
+    """
+    )
+    fun getFavouriteNotesFlow(): Flow<List<DbNote>>
 
     @Query("SELECT * FROM notes")
     fun getAllNotes(): List<DbNote>
