@@ -1,29 +1,33 @@
 package com.example.myapplication.model.repository
 
+import android.content.Context
+import androidx.work.*
 import com.example.ktor_client.ApiClient
 import com.example.myapplication.model.LogUtil
+import com.example.myapplication.model.NoteSyncWorker
 import com.example.myapplication.model.db.dao.NoteDao
 import com.example.myapplication.model.db.entity.DbNote
 import com.example.myapplication.model.db.entity.SyncStatus
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class NoteRepository @Inject constructor(
-    private val noteDao: NoteDao
+    private val noteDao: NoteDao,
+    @param:ApplicationContext private val context: Context
 ) : INoteRepository {
     private val TAG = "NoteRepo"
 
     private val noteApiClient by lazy { ApiClient() }
 
-    override suspend fun getAllNotesFlow(): Flow<List<DbNote>> = noteDao.getAllNotes()
+    override suspend fun getAllNotesFlow(): Flow<List<DbNote>> = noteDao.getAllNotesFlow()
 
     override suspend fun synchronizeNotes() {
         try {
-            val allLocalNotes = noteDao.getAllNotes().first()
+            val allLocalNotes = noteDao.getAllNotes()
             val syncedLocalNotes = allLocalNotes.filter { it.syncStatus == SyncStatus.SYNCED }
             syncedLocalNotes.forEach { LogUtil.debug(it.toString()) }
             val serverNotes = noteApiClient.getNotes()
@@ -91,6 +95,7 @@ class NoteRepository @Inject constructor(
             }
         } catch (e: IOException) {
             updateNoteSyncStatus(note, SyncStatus.PENDING_INSERT)
+            enqueueNoteSyncWork()
             LogUtil.error("Error while adding note", TAG, e)
         }
     }
@@ -98,12 +103,13 @@ class NoteRepository @Inject constructor(
     override suspend fun deleteNote(dbNote: DbNote) {
         try {
             dbNote.lastModified = System.currentTimeMillis()
-            noteDao.deleteNote(dbNote)
             dbNote.remoteId?.let {
                 noteApiClient.deleteNote(it)
+                noteDao.deleteNote(dbNote)
             }
         } catch (e: IOException) {
             updateNoteSyncStatus(dbNote, SyncStatus.PENDING_DELETE)
+            enqueueNoteSyncWork()
             LogUtil.error("Error while deleting note", TAG, e)
         }
     }
@@ -117,6 +123,7 @@ class NoteRepository @Inject constructor(
             }
         } catch (e: IOException) {
             updateNoteSyncStatus(dbNote, SyncStatus.PENDING_UPDATE)
+            enqueueNoteSyncWork()
             LogUtil.error("Error while updating note", TAG, e)
         }
     }
@@ -136,5 +143,21 @@ class NoteRepository @Inject constructor(
         if (note.syncStatus == SyncStatus.PENDING_INSERT && status == SyncStatus.PENDING_UPDATE)
             return
         noteDao.updateNote(note.copy(syncStatus = status))
+    }
+
+    private fun enqueueNoteSyncWork() {
+        val workRequest = OneTimeWorkRequestBuilder<NoteSyncWorker>()
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+            )
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "note_sync_work",
+            ExistingWorkPolicy.KEEP,
+            workRequest
+        )
     }
 }

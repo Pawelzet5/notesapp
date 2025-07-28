@@ -11,8 +11,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
+    @Query("SELECT * FROM notes WHERE syncStatus != 'PENDING_DELETE'")
+    fun getAllNotesFlow(): Flow<List<DbNote>>
+
     @Query("SELECT * FROM notes")
-    fun getAllNotes(): Flow<List<DbNote>>
+    fun getAllNotes(): List<DbNote>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNote(dbNote: DbNote): Long
