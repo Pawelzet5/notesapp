@@ -1,10 +1,10 @@
-package com.example.myapplication.model
+package com.example.myapplication.model.repository
 
 import com.example.ktor_client.ApiClient
+import com.example.myapplication.model.LogUtil
 import com.example.myapplication.model.db.dao.NoteDao
 import com.example.myapplication.model.db.entity.DbNote
 import com.example.myapplication.model.db.entity.SyncStatus
-import com.example.myapplication.model.repository.INoteRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import java.io.IOException
@@ -77,54 +77,64 @@ class NoteRepository @Inject constructor(
         } catch (e: IOException) {
             LogUtil.error("Problem occured during sync", TAG, e)
         }
-
-        // Adding new notes from remote
-        val localRemoteIds = allLocalNotes.mapNotNull { it.remoteId }.toSet()
-        for (serverNote in serverNotes) {
-            if (!localRemoteIds.contains(serverNote.id)) {
-                val noteToInsert = DbNote(
-                    localId = 0L,
-                    remoteId = serverNote.id,
-                    title = serverNote.title,
-                    content = serverNote.content,
-                    isFavourite = serverNote.isFavourite,
-                    lastModified = serverNote.lastModified,
-                    syncStatus = SyncStatus.SYNCED
-                )
-                noteDao.insertNote(noteToInsert)
-            }
-        }
     }
 
     override suspend fun insertNote(title: String, content: String) {
+        val note = insertNoteToDatabase(title, content)
         try {
-            val note = insertNoteToDatabase(title, content)
-            noteApiClient.addNote(title, content).let { assignedRemoteId ->
+            noteApiClient.addNote(
+                title,
+                content,
+                note.lastModified
+            ).let { assignedRemoteId ->
                 noteDao.updateNote(note.copy(remoteId = assignedRemoteId))
             }
-        } catch (e: Exception) {
-            //TODO(Implement handling exception)
+        } catch (e: IOException) {
+            updateNoteSyncStatus(note, SyncStatus.PENDING_INSERT)
+            LogUtil.error("Error while adding note", TAG, e)
         }
-
     }
 
     override suspend fun deleteNote(dbNote: DbNote) {
-        noteDao.deleteNote(dbNote)
-        dbNote.remoteId?.let {
-            noteApiClient.deleteNote(it)
+        try {
+            dbNote.lastModified = System.currentTimeMillis()
+            noteDao.deleteNote(dbNote)
+            dbNote.remoteId?.let {
+                noteApiClient.deleteNote(it)
+            }
+        } catch (e: IOException) {
+            updateNoteSyncStatus(dbNote, SyncStatus.PENDING_DELETE)
+            LogUtil.error("Error while deleting note", TAG, e)
         }
     }
 
     override suspend fun updateNote(dbNote: DbNote) {
-        noteDao.updateNote(dbNote)
-        dbNote.remoteId?.let {
-            noteApiClient.updateNote(it, dbNote.isFavourite)
+        try {
+            dbNote.lastModified = System.currentTimeMillis()
+            noteDao.updateNote(dbNote)
+            dbNote.remoteId?.let {
+                noteApiClient.updateNote(it, dbNote.isFavourite, dbNote.lastModified)
+            }
+        } catch (e: IOException) {
+            updateNoteSyncStatus(dbNote, SyncStatus.PENDING_UPDATE)
+            LogUtil.error("Error while updating note", TAG, e)
         }
     }
 
     private suspend fun insertNoteToDatabase(title: String, content: String): DbNote {
-        val note = DbNote(title = title, content = content, isFavourite = false)
-        val id = noteDao.insertNote(note)
-        return note.copy(localId = id)
+        val dbNote = DbNote(
+            title = title,
+            content = content,
+            isFavourite = false,
+            lastModified = System.currentTimeMillis()
+        )
+        val id = noteDao.insertNote(dbNote)
+        return dbNote.copy(localId = id)
+    }
+
+    private suspend fun updateNoteSyncStatus(note: DbNote, status: SyncStatus) {
+        if (note.syncStatus == SyncStatus.PENDING_INSERT && status == SyncStatus.PENDING_UPDATE)
+            return
+        noteDao.updateNote(note.copy(syncStatus = status))
     }
 }
