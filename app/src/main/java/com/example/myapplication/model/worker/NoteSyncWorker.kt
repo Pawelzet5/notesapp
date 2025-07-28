@@ -1,10 +1,11 @@
-package com.example.myapplication.model
+package com.example.myapplication.model.worker
 
 import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.ktor_client.ApiClient
+import com.example.myapplication.model.LogUtil
 import com.example.myapplication.model.db.dao.NoteDao
 import com.example.myapplication.model.db.entity.DbNote
 import com.example.myapplication.model.db.entity.SyncStatus
@@ -18,8 +19,8 @@ import java.io.IOException
 class NoteSyncWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
-    @Assisted  private val noteDao: NoteDao,
-    @Assisted  private val apiClient: ApiClient
+    @Assisted private val noteDao: NoteDao,
+    @Assisted private val apiClient: ApiClient
 ) : CoroutineWorker(appContext, workerParams) {
     private val TAG = "NoteSyncWorker"
 

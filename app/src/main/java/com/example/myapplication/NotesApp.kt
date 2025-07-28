@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.work.*
 import com.example.ktor_client.ApiClient
-import com.example.myapplication.model.NoteSyncWorker
+import com.example.myapplication.model.worker.NoteSyncWorker
 import com.example.myapplication.model.db.dao.NoteDao
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
