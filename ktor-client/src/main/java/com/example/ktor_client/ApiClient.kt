@@ -1,21 +1,15 @@
 package com.example.ktor_client
 
-import com.example.models.dto.CreateNoteBody
-import com.example.models.dto.GetNoteBody
-import com.example.models.dto.UpdateNoteBody
+
+import com.example.models.dto.*
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.delete
-import io.ktor.client.request.get
-import io.ktor.client.request.post
-import io.ktor.client.request.put
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.contentType
+import io.ktor.client.request.*
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.io.IOException
 
 class ApiClient {
 
@@ -27,8 +21,8 @@ class ApiClient {
         return client.get("$urlString/notes").body()
     }
 
-    suspend fun addNote(title: String, content: String): Long {
-        val createNoteBody = CreateNoteBody(title, content)
+    suspend fun addNote(title: String, content: String, lastModified: Long): Long {
+        val createNoteBody = CreateNoteBody(title, content, lastModified)
         val response = client.post("$urlString/note") {
             contentType(ContentType.Application.Json)
             setBody(createNoteBody)
@@ -40,8 +34,8 @@ class ApiClient {
             throw IOException("Error during uploading new note")
     }
 
-    suspend fun updateNote(noteId: Long, isFavourite: Boolean): Boolean {
-        val updateNoteBody = UpdateNoteBody(noteId, isFavourite)
+    suspend fun updateNote(noteId: Long, isFavourite: Boolean, lastModified: Long): Boolean {
+        val updateNoteBody = UpdateNoteBody(noteId, isFavourite, lastModified)
         val response = client.put("$urlString/note/${updateNoteBody.id}") {
             contentType(ContentType.Application.Json)
             setBody(updateNoteBody)
