@@ -105,7 +105,7 @@ class NoteRepository @Inject constructor(
             dbNote.remoteId?.let {
                 noteApiClient.deleteNote(it)
                 noteDao.deleteNote(dbNote)
-            }
+            } ?: noteDao.deleteNote(dbNote)
         } catch (e: IOException) {
             updateNoteSyncStatus(dbNote, SyncStatus.PENDING_DELETE)
             enqueueNoteSyncWork()
