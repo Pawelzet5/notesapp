@@ -27,4 +27,11 @@ W ramach zadania rekrutacyjnego zrobiłem:
         + syncStatus <- pole które będzie wykorzystywane przez WorkManager
             w celu rozpoznania notatek które trzeba zsynchronizować z backendem
     - rozszerzenie Note.sq: pole lastModified
-
+    Implementacja WorkManager:
+        Utworzyłem NoteSyncWorker którego zadaniem jest upload zmian wprowadzonych przez uzytkownika
+        do bazy danych po przywróceniu dostępu do sieci.
+        Utworzyłem NoteBasicSynchronizationWorker który służy do generalnej synchronizacji notatek z backendu:
+            + raz na 12 godzin
+            + przy powrocie aplikacji do foreground
+        Dodatkowo wprowadziłem opcje synchronizacji on demand (swipe to refresh)
+8.
