@@ -8,6 +8,7 @@ import com.example.myapplication.model.worker.NoteSyncWorker
 import com.example.myapplication.model.db.dao.NoteDao
 import com.example.myapplication.model.db.entity.DbNote
 import com.example.myapplication.model.db.entity.SyncStatus
+import com.example.myapplication.model.worker.NoteBasicSynchronizationWorker
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import java.io.IOException
@@ -125,6 +126,22 @@ class NoteRepository @Inject constructor(
             enqueueNoteSyncWork()
             LogUtil.error("Error while updating note", TAG, e)
         }
+    }
+
+    override suspend fun enqueueNotesImmediateSync() {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+
+            val workRequest = OneTimeWorkRequestBuilder<NoteBasicSynchronizationWorker>()
+                .setConstraints(constraints)
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                "immediate_note_sync",
+                ExistingWorkPolicy.REPLACE,
+                workRequest
+            )
     }
 
     private suspend fun insertNoteToDatabase(title: String, content: String): DbNote {

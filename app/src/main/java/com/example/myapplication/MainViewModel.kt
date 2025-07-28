@@ -1,5 +1,7 @@
 package com.example.myapplication
 
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myapplication.model.db.entity.DbNote
@@ -13,7 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val noteRepository: INoteRepository
-) : ViewModel() {
+) : ViewModel(), DefaultLifecycleObserver {
     private val _notes = MutableStateFlow<List<DbNote>>(emptyList())
     val notes: StateFlow<List<DbNote>> = _notes.asStateFlow()
 
@@ -24,9 +26,15 @@ class MainViewModel @Inject constructor(
         loadNotes()
     }
 
+    override fun onResume(owner: LifecycleOwner) {
+        super.onResume(owner)
+        viewModelScope.launch(Dispatchers.IO) {
+            noteRepository.enqueueNotesImmediateSync()
+        }
+    }
+
     private fun loadNotes() {
         viewModelScope.launch(Dispatchers.IO) {
-            noteRepository.synchronizeNotes()
             noteRepository.getAllNotesFlow().collect {
                 _notes.value = it
             }

@@ -13,4 +13,6 @@ interface INoteRepository {
     suspend fun deleteNote(dbNote: DbNote)
 
     suspend fun updateNote(dbNote: DbNote)
+
+    suspend fun enqueueNotesImmediateSync()
 }
