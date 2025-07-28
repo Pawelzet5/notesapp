@@ -15,11 +15,11 @@ interface NoteDao {
     fun getAllNotes(): Flow<List<DbNote>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertNote(dbNote: DbNote): Long
+    suspend fun insertNote(dbNote: DbNote): Long
 
     @Update
-    fun updateNote(dbNote: DbNote)
+    suspend fun updateNote(dbNote: DbNote)
 
     @Delete
-    fun deleteNote(dbNote: DbNote)
+    suspend fun deleteNote(dbNote: DbNote)
 }

@@ -1,7 +1,8 @@
 Cześć :)
 W ramach zadania rekrutacyjnego zrobiłem:
-1. Bugfix(ish) c902e0c6632d458085ce344124cd6c7c49d17629
+1. Mniejsze usprawnienia
     Użyłem remeberSaveable przy polu input aby jego zawartość przetrwała zmiany konfiguracyjne
+    Zmodyfikowałem logikę mierzenia bottomPadding - aby nie było przestrzeni między inputem a klawiaturą
 2. Bugfix 2f60d3397129f027a883f3e5d73583674cd60e82
     Uzyłem remeber zamiast rememberSaveable przy usuwania Note'a
     dismissState był powiązany z `note.id` więc przy dodaniu nowego Note'a był on od razu usuwany
@@ -19,3 +20,11 @@ W ramach zadania rekrutacyjnego zrobiłem:
     title - dodatek ode mnie w celu subtelnego rozbudowania widoku notatki
         o atrybut który ułatwia czytelność takich notatek na liście i identyfikacje :)
     + update pola isFavourite na backendzie.
+
+7. Obsługa offline mode:
+    - rozszerzenie encji DbNote:
+        + lastModified <- timestamp kiedy notatka była edytowana
+        + syncStatus <- pole które będzie wykorzystywane przez WorkManager
+            w celu rozpoznania notatek które trzeba zsynchronizować z backendem
+    - rozszerzenie Note.sq: pole lastModified
+

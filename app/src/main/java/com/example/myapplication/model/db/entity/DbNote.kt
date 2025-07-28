@@ -10,5 +10,14 @@ data class DbNote(
     val remoteId: Long? = null,
     val title: String,
     val content: String,
-    var isFavourite: Boolean
+    var isFavourite: Boolean,
+    var lastModified: Long = 0L,
+    var syncStatus: SyncStatus = SyncStatus.SYNCED
 )
+
+enum class SyncStatus {
+    SYNCED,
+    PENDING_INSERT,
+    PENDING_UPDATE,
+    PENDING_DELETE;
+}
