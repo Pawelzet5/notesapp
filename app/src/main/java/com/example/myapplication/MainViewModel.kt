@@ -23,6 +23,7 @@ class MainViewModel @Inject constructor(
 
     private fun loadNotes() {
         viewModelScope.launch(Dispatchers.IO) {
+            noteRepository.synchronizeNotes()
             noteRepository.getAllNotesFlow().collect {
                 _notes.value = it
             }

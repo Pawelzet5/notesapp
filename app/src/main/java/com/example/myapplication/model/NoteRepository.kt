@@ -18,13 +18,53 @@ class NoteRepository @Inject constructor(
 
     override suspend fun getAllNotesFlow(): Flow<List<DbNote>> = noteDao.getAllNotes()
 
-    override suspend fun synchroniseNotes() {
-        val backendNotes = noteApiClient.getNotes()
-        val localNotes = noteDao.getAllNotes().last()
-        val backendNotesIds = backendNotes.map { it.id }.toSet()
-        val localNotesIds = localNotes.map { it.remoteId }.toSet()
+    override suspend fun synchronizeNotes() {
+        val allLocalNotes = noteDao.getAllNotes().first()
+        val syncedLocalNotes = allLocalNotes.filter { it.syncStatus == SyncStatus.SYNCED }
 
-        // TODO(Implement Synchronization)
+        val serverNotes = noteApiClient.getNotes()
+        val serverNotesById = serverNotes.associateBy { it.id }
+
+        for (localNote in syncedLocalNotes) {
+            val remoteNote = localNote.remoteId?.let { serverNotesById[it] }
+            if (remoteNote != null) {
+                // LWW strategy comparison
+                if (remoteNote.lastModified > localNote.lastModified) {
+                    // Newer version on remote db - updating locally
+                    val updatedNote = localNote.copy(
+                        title = remoteNote.title,
+                        content = remoteNote.content,
+                        isFavourite = remoteNote.isFavourite,
+                        lastModified = remoteNote.lastModified,
+                        syncStatus = SyncStatus.SYNCED
+                    )
+                    noteDao.updateNote(updatedNote)
+                } else if (localNote.lastModified > remoteNote.lastModified) {
+                    // Newer version on local db - updating on remote
+                    noteApiClient.updateNote(localNote.remoteId, localNote.isFavourite)
+                }
+            } else {
+                // Note not present on remote so it was deleted - deleting locally
+                noteDao.deleteNote(localNote)
+            }
+        }
+
+        // Adding new notes from remote
+        val localRemoteIds = allLocalNotes.mapNotNull { it.remoteId }.toSet()
+        for (serverNote in serverNotes) {
+            if (!localRemoteIds.contains(serverNote.id)) {
+                val noteToInsert = DbNote(
+                    localId = 0L,
+                    remoteId = serverNote.id,
+                    title = serverNote.title,
+                    content = serverNote.content,
+                    isFavourite = serverNote.isFavourite,
+                    lastModified = serverNote.lastModified,
+                    syncStatus = SyncStatus.SYNCED
+                )
+                noteDao.insertNote(noteToInsert)
+            }
+        }
     }
 
     override suspend fun insertNote(title: String, content: String) {
