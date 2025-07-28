@@ -18,8 +18,8 @@ import java.io.IOException
 class NoteSyncWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
-    private val noteDao: NoteDao,
-    private val apiClient: ApiClient
+    @Assisted  private val noteDao: NoteDao,
+    @Assisted  private val apiClient: ApiClient
 ) : CoroutineWorker(appContext, workerParams) {
     private val TAG = "NoteSyncWorker"
 
