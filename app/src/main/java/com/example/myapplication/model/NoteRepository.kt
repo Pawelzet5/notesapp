@@ -3,9 +3,11 @@ package com.example.myapplication.model
 import com.example.ktor_client.ApiClient
 import com.example.myapplication.model.db.dao.NoteDao
 import com.example.myapplication.model.db.entity.DbNote
+import com.example.myapplication.model.db.entity.SyncStatus
 import com.example.myapplication.model.repository.INoteRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.last
+import kotlinx.coroutines.flow.first
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,40 +15,67 @@ import javax.inject.Singleton
 class NoteRepository @Inject constructor(
     private val noteDao: NoteDao
 ) : INoteRepository {
+    private val TAG = "NoteRepo"
 
     private val noteApiClient by lazy { ApiClient() }
 
     override suspend fun getAllNotesFlow(): Flow<List<DbNote>> = noteDao.getAllNotes()
 
     override suspend fun synchronizeNotes() {
-        val allLocalNotes = noteDao.getAllNotes().first()
-        val syncedLocalNotes = allLocalNotes.filter { it.syncStatus == SyncStatus.SYNCED }
+        try {
+            val allLocalNotes = noteDao.getAllNotes().first()
+            val syncedLocalNotes = allLocalNotes.filter { it.syncStatus == SyncStatus.SYNCED }
+            syncedLocalNotes.forEach { LogUtil.debug(it.toString()) }
+            val serverNotes = noteApiClient.getNotes()
+            serverNotes.forEach { LogUtil.debug(it.toString()) }
+            val serverNotesById = serverNotes.associateBy { it.id }
 
-        val serverNotes = noteApiClient.getNotes()
-        val serverNotesById = serverNotes.associateBy { it.id }
-
-        for (localNote in syncedLocalNotes) {
-            val remoteNote = localNote.remoteId?.let { serverNotesById[it] }
-            if (remoteNote != null) {
-                // LWW strategy comparison
-                if (remoteNote.lastModified > localNote.lastModified) {
-                    // Newer version on remote db - updating locally
-                    val updatedNote = localNote.copy(
-                        title = remoteNote.title,
-                        content = remoteNote.content,
-                        isFavourite = remoteNote.isFavourite,
-                        lastModified = remoteNote.lastModified,
+            for (localNote in syncedLocalNotes) {
+                val remoteNote = localNote.remoteId?.let { serverNotesById[it] }
+                if (remoteNote != null) {
+                    LogUtil.debug("comparing:\n\t$remoteNote.\n\t$localNote")
+                    // LWW strategy comparison
+                    if (remoteNote.lastModified > localNote.lastModified) {
+                        // Newer version on remote db - updating locally
+                        val updatedNote = localNote.copy(
+                            title = remoteNote.title,
+                            content = remoteNote.content,
+                            isFavourite = remoteNote.isFavourite,
+                            lastModified = remoteNote.lastModified,
+                            syncStatus = SyncStatus.SYNCED
+                        )
+                        noteDao.updateNote(updatedNote)
+                    } else if (localNote.lastModified > remoteNote.lastModified) {
+                        // Newer version on local db - updating on remote
+                        noteApiClient.updateNote(
+                            localNote.remoteId,
+                            localNote.isFavourite,
+                            localNote.lastModified
+                        )
+                    }
+                } else {
+                    // Note not present on remote so it was deleted - deleting locally
+                    noteDao.deleteNote(localNote)
+                }
+            }
+            // Adding new notes from remote
+            val localRemoteIds = allLocalNotes.mapNotNull { it.remoteId }.toSet()
+            for (serverNote in serverNotes) {
+                if (!localRemoteIds.contains(serverNote.id)) {
+                    val noteToInsert = DbNote(
+                        localId = 0L,
+                        remoteId = serverNote.id,
+                        title = serverNote.title,
+                        content = serverNote.content,
+                        isFavourite = serverNote.isFavourite,
+                        lastModified = serverNote.lastModified,
                         syncStatus = SyncStatus.SYNCED
                     )
-                    noteDao.updateNote(updatedNote)
-                } else if (localNote.lastModified > remoteNote.lastModified) {
-                    // Newer version on local db - updating on remote
-                    noteApiClient.updateNote(localNote.remoteId, localNote.isFavourite)
+                    noteDao.insertNote(noteToInsert)
                 }
-            } else {
-                // Note not present on remote so it was deleted - deleting locally
-                noteDao.deleteNote(localNote)
             }
+        } catch (e: IOException) {
+            LogUtil.error("Problem occured during sync", TAG, e)
         }
 
         // Adding new notes from remote

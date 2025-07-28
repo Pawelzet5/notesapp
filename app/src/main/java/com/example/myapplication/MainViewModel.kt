@@ -17,6 +17,9 @@ class MainViewModel @Inject constructor(
     private val _notes = MutableStateFlow<List<DbNote>>(emptyList())
     val notes: StateFlow<List<DbNote>> = _notes.asStateFlow()
 
+    private val _syncInProgress = MutableStateFlow(false)
+     val syncInProgress = _syncInProgress.asStateFlow()
+
     init {
         loadNotes()
     }
@@ -45,6 +48,17 @@ class MainViewModel @Inject constructor(
     fun toggleNoteFavorite(dbNote: DbNote) {
         viewModelScope.launch(Dispatchers.IO) {
             noteRepository.updateNote(dbNote.copy(isFavourite = !dbNote.isFavourite))
+        }
+    }
+
+    fun onRefresh() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _syncInProgress.value = true
+            try {
+                noteRepository.synchronizeNotes()
+            } finally {
+                _syncInProgress.value = false
+            }
         }
     }
 }

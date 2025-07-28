@@ -45,7 +45,7 @@ fun Application.module() {
 
         put<UpdateNoteBody>("/note/{id}") { body ->
             val correctId = verifyCorrectNoteId() ?: return@put
-            database.noteQueries.updateFavourite(body.isFavourite, correctId)
+            database.noteQueries.updateFavourite(body.isFavourite, body.lastModified ,correctId)
         }
 
         delete("/note/{id}") {

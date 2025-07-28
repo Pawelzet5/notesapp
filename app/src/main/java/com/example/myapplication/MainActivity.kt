@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.SwipeToDismissBoxValue.Settled
 import androidx.compose.material3.SwipeToDismissBoxValue.StartToEnd
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -37,12 +38,14 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             MyApplicationTheme {
                 val notes by viewModel.notes.collectAsState()
+                val isRefreshing by viewModel.syncInProgress.collectAsState()
 
                 val layoutDirection = LocalLayoutDirection.current
 
@@ -50,74 +53,79 @@ class MainActivity : ComponentActivity() {
                 val statusBarInset = WindowInsets.statusBars.asPaddingValues()
                 val imeInset = WindowInsets.ime.asPaddingValues()
                 val navigationInset = WindowInsets.navigationBars.asPaddingValues()
-                Column(modifier = Modifier.fillMaxSize()) {
-                    var contentInput by rememberSaveable { mutableStateOf("") }
-                    var titleInput by rememberSaveable { mutableStateOf("") }
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = viewModel::onRefresh
+                ) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        var contentInput by rememberSaveable { mutableStateOf("") }
+                        var titleInput by rememberSaveable { mutableStateOf("") }
 
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        contentPadding =
-                            PaddingValues(
-                                top = statusBarInset.calculateTopPadding(),
-                                start = gestureInsets.calculateStartPadding(layoutDirection),
-                                end = gestureInsets.calculateEndPadding(layoutDirection),
-                            ),
-                    ) {
-                        items(notes) { note ->
-                            DismissableNote(
-                                modifier = Modifier.animateItem(),
-                                note = note,
-                                onDismiss = { viewModel.deleteNote(note) },
-                                onToggleFavorite = { viewModel.toggleNoteFavorite(note) }
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            contentPadding =
+                                PaddingValues(
+                                    top = statusBarInset.calculateTopPadding(),
+                                    start = gestureInsets.calculateStartPadding(layoutDirection),
+                                    end = gestureInsets.calculateEndPadding(layoutDirection),
+                                ),
+                        ) {
+                            items(notes) { note ->
+                                DismissableNote(
+                                    modifier = Modifier.animateItem(),
+                                    note = note,
+                                    onDismiss = { viewModel.deleteNote(note) },
+                                    onToggleFavorite = { viewModel.toggleNoteFavorite(note) }
+                                )
+                            }
+                        }
+
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    PaddingValues(
+                                        start =
+                                            gestureInsets.calculateStartPadding(layoutDirection),
+                                        end = gestureInsets.calculateEndPadding(layoutDirection),
+                                        bottom = imeInset.calculateBottomPadding()
+                                            .takeIf { it > 0.dp }
+                                            ?: navigationInset.calculateBottomPadding()
+                                    )
+                                )
+                        ) {
+                            TextField(
+                                modifier =
+                                    Modifier.fillMaxWidth(),
+                                value = titleInput,
+                                onValueChange = { titleInput = it },
+                                label = { Text("Tytuł notatki") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                            )
+                            TextField(
+                                modifier = Modifier.fillMaxWidth(),
+                                value = contentInput,
+                                onValueChange = { contentInput = it },
+                                label = { Text("Treść notatki") },
+                                keyboardActions =
+                                    KeyboardActions(
+                                        onSend = {
+                                            if (contentInput.isNotBlank()) {
+                                                viewModel.addNote(
+                                                    titleInput = titleInput,
+                                                    contentInput = contentInput
+                                                )
+                                                contentInput = ""
+                                                titleInput = ""
+                                            }
+                                        }
+                                    ),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                             )
                         }
-                    }
 
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                PaddingValues(
-                                    start =
-                                        gestureInsets.calculateStartPadding(layoutDirection),
-                                    end = gestureInsets.calculateEndPadding(layoutDirection),
-                                    bottom = imeInset.calculateBottomPadding()
-                                        .takeIf { it > 0.dp }
-                                        ?: navigationInset.calculateBottomPadding()
-                                )
-                            )
-                    ) {
-                        TextField(
-                            modifier =
-                                Modifier.fillMaxWidth(),
-                            value = titleInput,
-                            onValueChange = { titleInput = it },
-                            label = { Text("Tytuł notatki") },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-                        )
-                        TextField(
-                            modifier = Modifier.fillMaxWidth(),
-                            value = contentInput,
-                            onValueChange = { contentInput = it },
-                            label = { Text("Treść notatki") },
-                            keyboardActions =
-                                KeyboardActions(
-                                    onSend = {
-                                        if (contentInput.isNotBlank()) {
-                                            viewModel.addNote(
-                                                titleInput = titleInput,
-                                                contentInput = contentInput
-                                            )
-                                            contentInput = ""
-                                            titleInput = ""
-                                        }
-                                    }
-                                ),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                        )
                     }
-
                 }
             }
         }
@@ -133,7 +141,7 @@ fun DismissableNoteNoTitlePreview() {
     MyApplicationTheme {
 
         DismissableNote(
-            note = DbNote(1, 2, "", lorem, isFavourite = false),
+            note = DbNote(1, 2, "", lorem, isFavourite = false, 0),
             onDismiss = {}, onToggleFavorite = {}
         )
     }
@@ -143,7 +151,7 @@ fun DismissableNoteNoTitlePreview() {
 @Composable
 fun DismissableNoteWithTitlePreview() {
     DismissableNote(
-        note = DbNote(1, 2, "lorem", lorem, isFavourite = true),
+        note = DbNote(1, 2, "lorem", lorem, isFavourite = true, 0),
         onDismiss = {}, onToggleFavorite = {}
     )
 }
@@ -232,7 +240,7 @@ fun DismissableNote(
                         modifier = Modifier.weight(1f).padding(
                             start = 8.dp,
                             end = 8.dp,
-                            top =  if (showTitle) 0.dp else 8.dp,
+                            top = if (showTitle) 0.dp else 8.dp,
                             bottom = 8.dp
                         ),
                         text = note.content,

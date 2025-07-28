@@ -25,5 +25,5 @@ WHERE id = ?;
 
 updateFavourite:
 UPDATE note
-SET isFavourite = ?
+SET isFavourite = ?, lastModified = ?
 WHERE id = ?;

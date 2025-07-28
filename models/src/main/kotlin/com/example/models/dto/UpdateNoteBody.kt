@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UpdateNoteBody(
     @SerialName("id") val id: Long,
-    @SerialName("isFavourite") val isFavourite: Boolean
+    @SerialName("isFavourite") val isFavourite: Boolean,
+    @SerialName("lastModified") val lastModified: Long
 )
