@@ -17,11 +17,10 @@ import javax.inject.Singleton
 @Singleton
 class NoteRepository @Inject constructor(
     private val noteDao: NoteDao,
+    private val noteApiClient: ApiClient,
     @param:ApplicationContext private val context: Context
 ) : INoteRepository {
     private val TAG = "NoteRepo"
-
-    private val noteApiClient by lazy { ApiClient() }
 
     override suspend fun getAllNotesFlow(): Flow<List<DbNote>> = noteDao.getAllNotesFlow()
 
