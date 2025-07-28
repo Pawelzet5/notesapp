@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
-    @Query("SELECT * FROM notes WHERE syncStatus != 'PENDING_DELETE'")
+    @Query("SELECT * FROM notes WHERE syncStatus != 'PENDING_DELETE' ORDER BY lastModified DESC")
     fun getAllNotesFlow(): Flow<List<DbNote>>
 
     @Query("SELECT * FROM notes")
