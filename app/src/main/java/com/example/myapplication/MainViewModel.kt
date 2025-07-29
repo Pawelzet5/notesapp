@@ -38,7 +38,7 @@ class MainViewModel @Inject constructor(
 
     fun addNote(titleInput: String, contentInput: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            noteRepository.insertNote(titleInput, contentInput)
+            noteRepository.insertNote(titleInput, contentInput, _showFavouritesOnly.value)
         }
     }
 

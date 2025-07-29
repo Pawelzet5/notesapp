@@ -26,14 +26,27 @@ fun Application.module() {
 
         get("/notes") {
             val dbNotes = database.noteQueries.selectAll().executeAsList()
-            val dtoNotes = dbNotes.map { GetNoteBody(it.id, it.title, it.content, it.isFavourite, it.lastModified) }
+            val dtoNotes = dbNotes.map {
+                GetNoteBody(
+                    it.id,
+                    it.title,
+                    it.content,
+                    it.isFavourite,
+                    it.lastModified
+                )
+            }
             call.respond(dtoNotes)
         }
 
         post<CreateNoteBody>("/note") { note ->
             try {
                 val assignedId = database.transactionWithResult {
-                    database.noteQueries.insert(note.title, note.content, note.lastModified)
+                    database.noteQueries.insert(
+                        note.title,
+                        note.content,
+                        note.isFavourite,
+                        note.lastModified
+                    )
                     database.noteQueries.lastInsertId().executeAsOne()
                 }
                 call.respond(HttpStatusCode.Created, CreateNoteResponse(assignedId))
@@ -45,7 +58,7 @@ fun Application.module() {
 
         put<UpdateNoteBody>("/note/{id}") { body ->
             val correctId = verifyCorrectNoteId() ?: return@put
-            database.noteQueries.updateFavourite(body.isFavourite, body.lastModified ,correctId)
+            database.noteQueries.updateFavourite(body.isFavourite, body.lastModified, correctId)
         }
 
         delete("/note/{id}") {

@@ -9,7 +9,7 @@ interface INoteRepository {
 
     suspend fun synchronizeNotes()
 
-    suspend fun insertNote(title: String, content: String)
+    suspend fun insertNote(title: String, content: String, isFavourite: Boolean)
 
     suspend fun deleteNote(dbNote: DbNote)
 

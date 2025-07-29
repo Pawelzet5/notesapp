@@ -21,8 +21,13 @@ class ApiClient {
         return client.get("$urlString/notes").body()
     }
 
-    suspend fun addNote(title: String, content: String, lastModified: Long): Long {
-        val createNoteBody = CreateNoteBody(title, content, lastModified)
+    suspend fun addNote(
+        title: String,
+        content: String,
+        isFavourite: Boolean,
+        lastModified: Long
+    ): Long {
+        val createNoteBody = CreateNoteBody(title, content, isFavourite, lastModified)
         val response = client.post("$urlString/note") {
             contentType(ContentType.Application.Json)
             setBody(createNoteBody)

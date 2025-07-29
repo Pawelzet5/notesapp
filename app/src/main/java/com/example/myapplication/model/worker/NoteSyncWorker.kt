@@ -38,6 +38,7 @@ class NoteSyncWorker @AssistedInject constructor(
                             val assignedRemoteId = apiClient.addNote(
                                 note.title,
                                 note.content,
+                                note.isFavourite,
                                 note.lastModified
                             )
                             noteDao.updateNote(

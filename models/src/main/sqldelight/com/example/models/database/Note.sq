@@ -13,8 +13,8 @@ SELECT *
 FROM note;
 
 insert:
-INSERT INTO note(title, content, lastModified)
-VALUES (?, ?, ?);
+INSERT INTO note(title, content, isFavourite, lastModified)
+VALUES (?, ?, ?, ?);
 
 lastInsertId:
 SELECT last_insert_rowid();

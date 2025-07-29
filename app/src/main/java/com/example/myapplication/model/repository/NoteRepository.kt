@@ -89,12 +89,13 @@ class NoteRepository @Inject constructor(
         }
     }
 
-    override suspend fun insertNote(title: String, content: String) {
-        val note = insertNoteToDatabase(title, content)
+    override suspend fun insertNote(title: String, content: String, isFavourite: Boolean) {
+        val note = insertNoteToDatabase(title, content, isFavourite)
         try {
             noteApiClient.addNote(
                 title,
                 content,
+                isFavourite,
                 note.lastModified
             ).let { assignedRemoteId ->
                 noteDao.updateNote(note.copy(remoteId = assignedRemoteId))
@@ -150,11 +151,11 @@ class NoteRepository @Inject constructor(
             )
     }
 
-    private suspend fun insertNoteToDatabase(title: String, content: String): DbNote {
+    private suspend fun insertNoteToDatabase(title: String, content: String, isFavourite: Boolean): DbNote {
         val dbNote = DbNote(
             title = title,
             content = content,
-            isFavourite = false,
+            isFavourite = isFavourite,
             lastModified = System.currentTimeMillis()
         )
         val id = noteDao.insertNote(dbNote)
