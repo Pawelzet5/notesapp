@@ -34,4 +34,10 @@ W ramach zadania rekrutacyjnego zrobiłem:
             + raz na 12 godzin
             + przy powrocie aplikacji do foreground
         Dodatkowo wprowadziłem opcje synchronizacji on demand (swipe to refresh)
-8.
+8.  Dodałem FilterChip pozwalający na wyświetlenie tylko ulubionych notatek.
+    Dodałem animację elementów listy aby zmiana zawartości listy wyglądała zgrabniej.
+    Lista jest sortowana po lastModified.
+
+Dziękuję za uwagę.
+Bardzo przyjemne zadanie rekrutacyjne :)
+Pozdrawiam!
