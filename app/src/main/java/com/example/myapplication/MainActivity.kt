@@ -4,6 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -80,9 +83,16 @@ class MainActivity : ComponentActivity() {
                                     end = gestureInsets.calculateEndPadding(layoutDirection),
                                 ),
                         ) {
-                            items(notes) { note ->
+                            items(notes, key = { it.localId }) { note ->
                                 DismissableNote(
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.animateItem(
+                                        fadeInSpec = tween(durationMillis = 300),
+                                        fadeOutSpec = tween(durationMillis = 200),
+                                        placementSpec = spring(
+                                            stiffness = Spring.StiffnessLow,
+                                            dampingRatio = Spring.DampingRatioLowBouncy
+                                        )
+                                    ),
                                     note = note,
                                     onDismiss = { viewModel.deleteNote(note) },
                                     onToggleFavorite = { viewModel.toggleNoteFavourite(note) }
